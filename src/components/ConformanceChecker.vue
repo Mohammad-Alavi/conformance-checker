@@ -115,8 +115,15 @@
       </v-col>
     </v-row>
 
+    <!-- Loading Skeleton -->
+    <v-row v-if="loading" justify="center" class="mt-6">
+      <v-col cols="12" md="10" lg="8">
+        <LoadingSkeleton />
+      </v-col>
+    </v-row>
+
     <!-- Results Section -->
-    <v-row v-if="result" justify="center" class="mt-6">
+    <v-row v-else-if="result" justify="center" class="mt-6">
       <v-col cols="12" md="10" lg="8">
         <ConformanceResult
           :result="result"
@@ -174,6 +181,7 @@
 import { ref, computed } from 'vue'
 import { useConformanceApi } from '@/composables/useConformanceApi'
 import ConformanceResult from './ConformanceResult.vue'
+import LoadingSkeleton from './LoadingSkeleton.vue'
 
 const { loading, error, result, checkConformance, reset } = useConformanceApi()
 

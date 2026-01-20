@@ -1,79 +1,136 @@
-# Vuetify (Default)
+# Conformance Checker
 
-This is the official scaffolding tool for Vuetify, designed to give you a head start in building your new Vuetify application. It sets up a base template with all the necessary configurations and standard directory structure, enabling you to begin development without the hassle of setting up the project from scratch.
+AI-powered tool to validate objectives and goals against conformance rules. Built with Vue 3, Vuetify 3, and n8n workflows.
 
-## ❗️ Important Links
+## Features
 
-- 📄 [Docs](https://vuetifyjs.com/)
-- 🚨 [Issues](https://issues.vuetifyjs.com/)
-- 🏬 [Store](https://store.vuetifyjs.com/)
-- 🎮 [Playground](https://play.vuetifyjs.com/)
-- 💬 [Discord](https://community.vuetifyjs.com)
+- **Objective Validation**: Check if your objectives meet SMART criteria (Specific, Measurable, Achievable, Relevant, Time-bound)
+- **Goal Validation**: Validate aspirational goals that should be timeless and outcome-focused
+- **Real-time Analysis**: Get instant feedback on conformance scores, violations, and suggestions
+- **Quick Fixes**: Apply suggested fixes with one click
+- **Type Detection**: Automatic detection if your content is misclassified (e.g., a goal written as an objective)
+- **Dark Mode**: Toggle between light and dark themes
 
-## 💿 Install
+## Tech Stack
 
-Set up your project using your preferred package manager. Use the corresponding command to install the dependencies:
+- **Frontend**: Vue 3 with Composition API
+- **UI Framework**: Vuetify 3
+- **Build Tool**: Vite 7
+- **Backend**: n8n workflows with AI-powered validation
 
-| Package Manager                                                | Command        |
-|---------------------------------------------------------------|----------------|
-| [yarn](https://yarnpkg.com/getting-started)                   | `yarn install` |
-| [npm](https://docs.npmjs.com/cli/v7/commands/npm-install)     | `npm install`  |
-| [pnpm](https://pnpm.io/installation)                          | `pnpm install` |
-| [bun](https://bun.sh/#getting-started)                        | `bun install`  |
+## Getting Started
 
-After completing the installation, your environment is ready for Vuetify development.
+### Prerequisites
 
-## ✨ Features
+- Node.js 18+
+- npm, yarn, pnpm, or bun
 
-- 🖼️ **Optimized Front-End Stack**: Leverage the latest Vue 3 and Vuetify 3 for a modern, reactive UI development experience. [Vue 3](https://v3.vuejs.org/) | [Vuetify 3](https://vuetifyjs.com/en/)
-- 🗃️ **State Management**: Integrated with [Pinia](https://pinia.vuejs.org/), the intuitive, modular state management solution for Vue.
-- 🚦 **Routing and Layouts**: Utilizes Vue Router for SPA navigation and vite-plugin-vue-layouts for organizing Vue file layouts. [Vue Router](https://router.vuejs.org/) | [vite-plugin-vue-layouts](https://github.com/JohnCampionJr/vite-plugin-vue-layouts)
-- ⚡ **Next-Gen Tooling**: Powered by Vite, experience fast cold starts and instant HMR (Hot Module Replacement). [Vite](https://vitejs.dev/)
-- 🧩 **Automated Component Importing**: Streamline your workflow with unplugin-vue-components, automatically importing components as you use them. [unplugin-vue-components](https://github.com/antfu/unplugin-vue-components)
+### Installation
 
-These features are curated to provide a seamless development experience from setup to deployment, ensuring that your Vuetify application is both powerful and maintainable.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Mohammad-Alavi/conformance-checker.git
+   cd conformance-checker
+   ```
 
-## 💡 Usage
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-This section covers how to start the development server and build your project for production.
+3. Create environment file:
+   ```bash
+   cp .env.example .env
+   ```
 
-### Starting the Development Server
+4. Update the API base URL in `.env` if needed:
+   ```
+   VITE_API_BASE_URL=https://your-n8n-instance.com/webhook
+   ```
 
-To start the development server with hot-reload, run the following command. The server will be accessible at [http://localhost:3000](http://localhost:3000):
-
-```bash
-yarn dev
-```
-
-(Repeat for npm, pnpm, and bun with respective commands.)
-
-> Add NODE_OPTIONS='--no-warnings' to suppress the JSON import warnings that happen as part of the Vuetify import mapping. If you are on Node [v21.3.0](https://nodejs.org/en/blog/release/v21.3.0) or higher, you can change this to NODE_OPTIONS='--disable-warning=5401'. If you don't mind the warning, you can remove this from your package.json dev script.
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
 ### Building for Production
 
-To build your project for production, use:
-
 ```bash
-yarn build
+npm run build
 ```
 
-(Repeat for npm, pnpm, and bun with respective commands.)
+The build output will be in the `dist` directory.
 
-Once the build process is completed, your application will be ready for deployment in a production environment.
+## Deployment
 
-## 💪 Support Vuetify Development
+### Vercel (Recommended)
 
-This project is built with [Vuetify](https://vuetifyjs.com/en/), a UI Library with a comprehensive collection of Vue components. Vuetify is an MIT licensed Open Source project that has been made possible due to the generous contributions by our [sponsors and backers](https://vuetifyjs.com/introduction/sponsors-and-backers/). If you are interested in supporting this project, please consider:
+1. Import the repository in Vercel
+2. Set the environment variable `VITE_API_BASE_URL` to your n8n webhook URL
+3. Deploy!
 
-- [Requesting Enterprise Support](https://support.vuetifyjs.com/)
-- [Sponsoring John on Github](https://github.com/users/johnleider/sponsorship)
-- [Sponsoring Kael on Github](https://github.com/users/kaelwd/sponsorship)
-- [Supporting the team on Open Collective](https://opencollective.com/vuetify)
-- [Becoming a sponsor on Patreon](https://www.patreon.com/vuetify)
-- [Becoming a subscriber on Tidelift](https://tidelift.com/subscription/npm/vuetify)
-- [Making a one-time donation with Paypal](https://paypal.me/vuetify)
+The `vercel.json` is pre-configured for Vue SPA routing.
 
-## 📑 License
-[MIT](http://opensource.org/licenses/MIT)
+### Other Platforms
 
-Copyright (c) 2016-present Vuetify, LLC
+Build the project and deploy the `dist` folder to any static hosting provider.
+
+## API Endpoints
+
+The app communicates with two n8n webhook endpoints:
+
+- `POST /webhook/conformance/objective` - Validate objectives
+- `POST /webhook/conformance/goal` - Validate goals
+
+### Request Body
+
+```json
+{
+  "title": "Your objective or goal title",
+  "description": "Optional description for context"
+}
+```
+
+### Response Structure
+
+```json
+{
+  "status": "success",
+  "conformance": {
+    "is_conformant": true,
+    "confidence_score": 0.95,
+    "conformance_score": 0.88,
+    "distance_to_conformance": 0.12,
+    "overall_message": "Content meets conformance requirements"
+  },
+  "analysis": {
+    "type_assessment": {
+      "detected_type": "objective",
+      "is_mismatch": false,
+      "alternatives": []
+    },
+    "strengths": [...],
+    "violations": [...]
+  },
+  "quick_fixes": [...],
+  "suggestions": [...]
+}
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Acknowledgments
+
+- [Vuetify](https://vuetifyjs.com/) - Vue UI Library
+- [n8n](https://n8n.io/) - Workflow automation platform
+- [Groq](https://groq.com/) - AI inference platform
