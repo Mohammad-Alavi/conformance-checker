@@ -1,10 +1,14 @@
 /**
  * Composable for interacting with the n8n Rules Management API
  * CRUD operations for conformance rules (objectives and goals)
+ *
+ * API Endpoints:
+ * - Collection: /webhook/collection/api/v1/rules (LIST, CREATE)
+ * - Item: /webhook/item/api/v1/rules/{rule_id} (GET, UPDATE, DELETE)
  */
 import { ref, computed } from 'vue'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://n8n.mohammadalavi.com/webhook'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://n8n.mohammadalavi.com'
 const API_TOKEN = import.meta.env.VITE_API_TOKEN || ''
 
 export function useRulesApi() {
@@ -58,8 +62,8 @@ export function useRulesApi() {
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`API error: ${response.status} - ${errorText || response.statusText}`)
+      const errorData = await response.json().catch(() => ({ error: response.statusText }))
+      throw new Error(errorData.error || `API error: ${response.status}`)
     }
 
     // Handle empty responses (like DELETE)
@@ -72,6 +76,7 @@ export function useRulesApi() {
 
   /**
    * List all rules by type
+   * GET /webhook/collection/api/v1/rules?type={content_type}
    * @param {'objective' | 'goal'} type - The rule type to fetch
    */
   async function listRules(type = 'objective') {
@@ -79,11 +84,13 @@ export function useRulesApi() {
     error.value = null
 
     try {
-      const data = await apiFetch(`/api/v1/rules?type=${type}`)
+      const data = await apiFetch(`/webhook/collection/api/v1/rules?type=${type}`)
+
+      // Response format: { content_type, count, rules: [...] }
+      const newRules = data.rules || []
 
       // Merge with existing rules of different type
       const otherTypeRules = rules.value.filter(r => r.content_type !== type)
-      const newRules = Array.isArray(data) ? data : (data.rules || data.data || [])
       rules.value = [...otherTypeRules, ...newRules]
 
       return newRules
@@ -104,14 +111,15 @@ export function useRulesApi() {
 
     try {
       const [objectiveData, goalData] = await Promise.all([
-        apiFetch('/api/v1/rules?type=objective'),
-        apiFetch('/api/v1/rules?type=goal'),
+        apiFetch('/webhook/collection/api/v1/rules?type=objective'),
+        apiFetch('/webhook/collection/api/v1/rules?type=goal'),
       ])
 
-      const objectiveRules = Array.isArray(objectiveData) ? objectiveData : (objectiveData.rules || objectiveData.data || [])
-      const goalRules = Array.isArray(goalData) ? goalData : (goalData.rules || goalData.data || [])
+      // Response format: { content_type, count, rules: [...] }
+      const objectiveRulesList = objectiveData.rules || []
+      const goalRulesList = goalData.rules || []
 
-      rules.value = [...objectiveRules, ...goalRules]
+      rules.value = [...objectiveRulesList, ...goalRulesList]
       return rules.value
     } catch (e) {
       error.value = e.message || 'Failed to fetch rules'
@@ -123,16 +131,18 @@ export function useRulesApi() {
 
   /**
    * Get a single rule by ID
-   * @param {string} ruleId - The rule ID
+   * GET /webhook/item/api/v1/rules/{rule_id}
+   * @param {string} ruleId - The rule ID (e.g., 'OBJ-001')
    */
   async function getRule(ruleId) {
     loading.value = true
     error.value = null
 
     try {
-      const data = await apiFetch(`/api/v1/rules/${ruleId}`)
-      currentRule.value = data
-      return data
+      const data = await apiFetch(`/webhook/item/api/v1/rules/${ruleId}`)
+      // Response format: { rule: {...} }
+      currentRule.value = data.rule || data
+      return currentRule.value
     } catch (e) {
       error.value = e.message || 'Failed to fetch rule'
       throw e
@@ -143,6 +153,7 @@ export function useRulesApi() {
 
   /**
    * Create a new rule
+   * POST /webhook/collection/api/v1/rules
    * @param {Object} ruleData - The rule data
    */
   async function createRule(ruleData) {
@@ -150,17 +161,32 @@ export function useRulesApi() {
     error.value = null
 
     try {
-      const data = await apiFetch('/api/v1/rules', {
-        method: 'POST',
-        body: JSON.stringify(ruleData),
-      })
-
-      // Add to local state
-      if (data) {
-        rules.value.push(data)
+      // Prepare request body according to API spec
+      const requestBody = {
+        rule_id: ruleData.rule_id,
+        content_type: ruleData.content_type,
+        severity: ruleData.severity,
+        title: ruleData.title,
+        target_field: ruleData.target_field || 'title',
+        category: ruleData.category || 'General',
+        weight: ruleData.weight || 1.0,
+        description: ruleData.description || '',
+        validation_hint: ruleData.validation_hint || '',
+        quick_fix_type: ruleData.quick_fix_type || null,
       }
 
-      return data
+      const data = await apiFetch('/webhook/collection/api/v1/rules', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+      })
+
+      // Response format: { message: "Rule created", rule: {...} }
+      const createdRule = data.rule || data
+      if (createdRule) {
+        rules.value.push(createdRule)
+      }
+
+      return createdRule
     } catch (e) {
       error.value = e.message || 'Failed to create rule'
       throw e
@@ -171,26 +197,37 @@ export function useRulesApi() {
 
   /**
    * Update an existing rule
+   * PUT /webhook/item/api/v1/rules/{rule_id}
+   * Only title, severity, and description can be updated
    * @param {string} ruleId - The rule ID
-   * @param {Object} updates - The fields to update
+   * @param {Object} updates - The fields to update (title, severity, description)
    */
   async function updateRule(ruleId, updates) {
     loading.value = true
     error.value = null
 
     try {
-      const data = await apiFetch(`/api/v1/rules/${ruleId}`, {
+      // Only send updatable fields according to API spec
+      const requestBody = {}
+      if (updates.title !== undefined) requestBody.title = updates.title
+      if (updates.severity !== undefined) requestBody.severity = updates.severity
+      if (updates.description !== undefined) requestBody.description = updates.description
+
+      const data = await apiFetch(`/webhook/item/api/v1/rules/${ruleId}`, {
         method: 'PUT',
-        body: JSON.stringify(updates),
+        body: JSON.stringify(requestBody),
       })
+
+      // Response format: { message: "Rule updated", rule: {...} }
+      const updatedRule = data.rule || data
 
       // Update local state
       const index = rules.value.findIndex(r => r.rule_id === ruleId)
-      if (index !== -1 && data) {
-        rules.value[index] = { ...rules.value[index], ...data }
+      if (index !== -1 && updatedRule) {
+        rules.value[index] = updatedRule
       }
 
-      return data
+      return updatedRule
     } catch (e) {
       error.value = e.message || 'Failed to update rule'
       throw e
@@ -200,7 +237,8 @@ export function useRulesApi() {
   }
 
   /**
-   * Delete (soft-delete/deactivate) a rule
+   * Delete a rule
+   * DELETE /webhook/item/api/v1/rules/{rule_id}
    * @param {string} ruleId - The rule ID
    */
   async function deleteRule(ruleId) {
@@ -208,10 +246,11 @@ export function useRulesApi() {
     error.value = null
 
     try {
-      await apiFetch(`/api/v1/rules/${ruleId}`, {
+      await apiFetch(`/webhook/item/api/v1/rules/${ruleId}`, {
         method: 'DELETE',
       })
 
+      // Response format: { message: "Rule deleted" }
       // Remove from local state
       rules.value = rules.value.filter(r => r.rule_id !== ruleId)
 

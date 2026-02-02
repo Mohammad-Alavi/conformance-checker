@@ -81,7 +81,7 @@
     <!-- Filters -->
     <v-card variant="outlined" class="mb-6 pa-4 filter-card">
       <v-row align="center">
-        <v-col cols="12" sm="4">
+        <v-col cols="12" sm="6" md="3">
           <v-text-field
             v-model="searchQuery"
             label="Search rules"
@@ -91,7 +91,7 @@
             density="compact"
           />
         </v-col>
-        <v-col cols="6" sm="3">
+        <v-col cols="6" sm="3" md="2">
           <v-select
             v-model="filterType"
             label="Type"
@@ -99,10 +99,10 @@
             clearable
             hide-details
             density="compact"
-            prepend-inner-icon="mdi-filter"
+            prepend-inner-icon="mdi-shape"
           />
         </v-col>
-        <v-col cols="6" sm="3">
+        <v-col cols="6" sm="3" md="2">
           <v-select
             v-model="filterSeverity"
             label="Severity"
@@ -113,7 +113,18 @@
             prepend-inner-icon="mdi-alert-circle"
           />
         </v-col>
-        <v-col cols="12" sm="2">
+        <v-col cols="6" sm="3" md="2">
+          <v-select
+            v-model="filterCategory"
+            label="Category"
+            :items="categoryOptions"
+            clearable
+            hide-details
+            density="compact"
+            prepend-inner-icon="mdi-folder"
+          />
+        </v-col>
+        <v-col cols="6" sm="3" md="3">
           <v-btn
             variant="tonal"
             block
@@ -337,6 +348,7 @@ const viewMode = ref('grid')
 const searchQuery = ref('')
 const filterType = ref(null)
 const filterSeverity = ref(null)
+const filterCategory = ref(null)
 
 // Dialog state
 const showFormDialog = ref(false)
@@ -365,6 +377,15 @@ const severityOptions = [
   { title: 'Medium', value: 'medium' },
   { title: 'Low', value: 'low' },
 ]
+
+// Dynamic category options from rules
+const categoryOptions = computed(() => {
+  const categories = new Set()
+  rules.value.forEach(rule => {
+    if (rule.category) categories.add(rule.category)
+  })
+  return Array.from(categories).sort().map(cat => ({ title: cat, value: cat }))
+})
 
 // Computed
 const criticalRulesCount = computed(() =>
@@ -395,6 +416,11 @@ const filteredRules = computed(() => {
     result = result.filter(rule => rule.severity === filterSeverity.value)
   }
 
+  // Filter by category
+  if (filterCategory.value) {
+    result = result.filter(rule => rule.category === filterCategory.value)
+  }
+
   return result
 })
 
@@ -413,6 +439,7 @@ function clearFilters() {
   searchQuery.value = ''
   filterType.value = null
   filterSeverity.value = null
+  filterCategory.value = null
 }
 
 function refreshRules() {
