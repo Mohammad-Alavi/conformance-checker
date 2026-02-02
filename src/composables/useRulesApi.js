@@ -5,7 +5,7 @@
 import { ref, computed } from 'vue'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://n8n.mohammadalavi.com/webhook'
-const API_TOKEN = import.meta.env.VITE_API_TOKEN || 'test-token-123'
+const API_TOKEN = import.meta.env.VITE_API_TOKEN || ''
 
 export function useRulesApi() {
   const loading = ref(false)
@@ -38,13 +38,23 @@ export function useRulesApi() {
    * Common fetch wrapper with auth
    */
   async function apiFetch(endpoint, options = {}) {
+    const headers = {
+      ...options.headers,
+    }
+
+    // Only add Content-Type for requests with body
+    if (options.body) {
+      headers['Content-Type'] = 'application/json'
+    }
+
+    // Only add Authorization header if token is configured
+    if (API_TOKEN) {
+      headers['Authorization'] = `Bearer ${API_TOKEN}`
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_TOKEN}`,
-        ...options.headers,
-      },
+      headers,
     })
 
     if (!response.ok) {

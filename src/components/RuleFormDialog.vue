@@ -357,7 +357,7 @@ const quickFixTypes = [
 
 // Validation rules
 const rules = {
-  required: v => !!v || 'This field is required',
+  required: v => (v !== null && v !== undefined && v !== '') || 'This field is required',
   ruleId: v => /^[A-Z]{2,5}-[A-Z]+-\d{3}$/.test(v) || 'Format: XXX-CATEGORY-000 (e.g., OBJ-CLARITY-001)',
   minLength: min => v => (v && v.length >= min) || `Minimum ${min} characters required`,
   positiveNumber: v => (v !== null && v !== '' && v >= 0) || 'Must be a positive number',

@@ -368,7 +368,7 @@ const severityOptions = [
 
 // Computed
 const criticalRulesCount = computed(() =>
-  rules.value.filter(r => r.severity === 'critical' || r.severity === 'high').length
+  rules.value.filter(r => r.severity === 'critical').length
 )
 
 const filteredRules = computed(() => {

@@ -1,7 +1,7 @@
 <template>
   <v-card
     class="rule-card h-100"
-    :class="{ 'rule-card--inactive': !rule.is_active }"
+    :class="{ 'rule-card--inactive': rule.is_active === false }"
     variant="outlined"
     hover
   >
